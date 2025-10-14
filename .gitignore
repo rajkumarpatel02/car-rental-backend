@@ -1,0 +1,50 @@
+# Node modules
+node_modules/
+*/node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+*/.env
+
+# Build / dist outputs
+dist/
+build/
+*/dist/
+*/build/
+
+# Docker
+docker-compose.override.yml
+*.pid
+*.seed
+*.pid.lock
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+
+# Coverage / testing
+coverage/
+*.lcov
+
+# Temporary files
+tmp/
+*.tmp
+
+# Local data volumes (if you persist Mongo/Redis locally)
+data/
+*/data/
+
+# Optional: TypeScript
+*.tsbuildinfo

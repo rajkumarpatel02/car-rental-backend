@@ -1,0 +1,20 @@
+{
+  "name": "car-rental-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev:auth": "cd services/auth && npm run dev",
+    "dev:car": "cd services/car && npm run dev",
+    "dev:booking": "cd services/booking && npm run dev",
+    "dev:worker": "cd services/worker && npm run dev",
+    "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:car\" \"npm run dev:booking\" \"npm run dev:worker\"",
+    "install:all": "npm install && cd services/auth && npm install && cd ../car && npm install && cd ../booking && npm install && cd ../worker && npm install"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "concurrently": "^7.6.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.9"
+  }
+}
