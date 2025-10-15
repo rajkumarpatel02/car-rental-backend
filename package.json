@@ -10,11 +10,19 @@
     "install:all": "npm install && cd services/auth && npm install && cd ../car && npm install && cd ../booking && npm install && cd ../worker && npm install"
   },
   "devDependencies": {
-    "@types/node": "^18.0.0",
+    "@types/amqplib": "^0.10.7",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/mongoose": "^5.11.96",
+    "@types/node": "^18.19.130",
     "concurrently": "^7.6.0",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "amqplib": "^0.10.9"
+    "amqplib": "^0.10.9",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2"
   }
 }

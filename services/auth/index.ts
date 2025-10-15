@@ -6,8 +6,6 @@ const app = express();
 const PORT = 3001;
 
 app.use(express.json());
-
-// Routes
 app.use('/api/auth', authRoutes);
 
 app.get('/health', (req, res) => {
@@ -16,7 +14,7 @@ app.get('/health', (req, res) => {
 
 const connectDB = async () => {
   try {
-    await mongoose.connect('mongodb://127.0.0.1:27017/auth_db');
+    await mongoose.connect('mongodb://127.0.0.1:27018/auth_db');
     console.log('✅ MongoDB Connected: auth_db');
   } catch (error) {
     console.error('❌ Database connection error:', error);

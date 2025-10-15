@@ -4,25 +4,21 @@ import { EVENT_TYPES } from '../../shared/events/eventTypes';
 
 const startWorker = async () => {
   try {
-    await mongoose.connect('mongodb://127.0.0.1:27018/booking_db');
+    await mongoose.connect('mongodb://127.0.0.1:27017/booking_db');
     console.log('✅ MongoDB Connected: booking_db');
 
+    console.log('👷 Worker: Connecting to RabbitMQ...');
     await rabbitMQ.connect();
-    
+    console.log('✅ Worker: Connected to RabbitMQ');
+
     // Listen for user creation to send welcome email
+    console.log('👷 Worker: Setting up USER_CREATED listener...');
     await rabbitMQ.consumeQueue(EVENT_TYPES.USER_CREATED, async (message) => {
+      console.log('👷 Worker: RECEIVED USER_CREATED event for:', message.email);
       console.log('👷 Worker: Sending welcome email to:', message.email);
       // Simulate email sending
       await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('✅ Welcome email sent to:', message.email);
-    });
-
-    // Listen for booking creation
-    await rabbitMQ.consumeQueue(EVENT_TYPES.BOOKING_CREATED, async (message) => {
-      console.log('👷 Worker: Processing booking confirmation for:', message.bookingId);
-      // Send booking confirmation email
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('✅ Booking confirmation sent for:', message.bookingId);
+      console.log('✅ Worker: Welcome email sent to:', message.email);
     });
 
     console.log('👷 Worker service started and listening for events...');
