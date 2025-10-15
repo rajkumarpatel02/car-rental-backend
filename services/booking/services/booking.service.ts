@@ -2,25 +2,22 @@ import { Booking } from '../models/Booking';
 import { CreateBookingDto, BookingResponseDto } from '../dtos/booking.dto';
 
 export class BookingService {
-  async createBooking(createBookingDto: CreateBookingDto, userId: string): Promise<BookingResponseDto> {
-    const { carId, startDate, endDate } = createBookingDto;
-
-    // For now, create booking without validation
-    // We'll add car availability check later
-    const totalPrice = this.calculatePrice(startDate, endDate, 50); // Default $50/day
-
-    const booking = await Booking.create({
-      userId,
-      carId,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
-      totalPrice,
-      status: 'pending',
-      paymentStatus: 'pending'
-    });
-
-    return this.mapToBookingResponse(booking);
-  }
+  async createBooking(createBookingDto: CreateBookingDto, userId: string) {
+  console.log('🔍 Creating booking for user:', userId);
+  
+  const booking = await Booking.create({
+    userId,
+    carId: createBookingDto.carId,
+    startDate: new Date(createBookingDto.startDate),
+    endDate: new Date(createBookingDto.endDate),
+    totalPrice: 250,
+    status: 'pending',
+    paymentStatus: 'pending'
+  });
+  
+  console.log('✅ Booking saved to MongoDB:', booking._id);
+  return this.mapToBookingResponse(booking);
+}
 
   async getUserBookings(userId: string): Promise<BookingResponseDto[]> {
     const bookings = await Booking.find({ userId }).sort({ createdAt: -1 });
