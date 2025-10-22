@@ -1,83 +1,98 @@
 import { Car } from '../models/Car';
+import { RedisManager } from '../../../shared/redis/redis.config';
 
 export class CarService {
-    async checkCarAvailability(carId: string, startDate: Date, endDate: Date) {
-        console.log(`🔍 Checking availability for car ${carId} from ${startDate} to ${endDate}`);
-        
-        const car = await Car.findById(carId);
-        if (!car) {
-            console.log(`❌ Car ${carId} not found`);
-            return {
-                isAvailable: false,
-                reason: 'Car not found'
-            };
-        }
-
-        // Check if car is marked as available
-        if (!car.isAvailable) {
-            console.log(`❌ Car ${carId} is marked as unavailable`);
-            return {
-                isAvailable: false,
-                reason: 'Car is currently not available for booking'
-            };
-        }
-
-        // TODO: Check for existing bookings (will implement when booking service is ready)
-        // For now, we'll assume no conflicts and calculate price
-        
-        const days = this.calculateDays(startDate, endDate);
-        const totalPrice = days * car.pricePerDay;
-
-        console.log(`✅ Car ${carId} is available. Price: ${totalPrice} for ${days} days`);
-
+  
+  // Your existing checkCarAvailability method
+  async checkCarAvailability(carId: string, startDate: Date, endDate: Date) {
+    // Implementation of checkCarAvailability
+    try {
+      const car = await Car.findById(carId);
+      if (!car) {
         return {
-            isAvailable: true,
-            car: {
-                id: car._id,
-                brand: car.brand,
-                modelName: car.modelName,
-                pricePerDay: car.pricePerDay
-            },
-            totalPrice,
-            days,
-            reason: null
+          isAvailable: false,
+          car: null,
+          totalPrice: 0,
+          reason: 'Car not found'
         };
-    }
+      }
 
-    async markCarAsBooked(carId: string) {
-        const car = await Car.findByIdAndUpdate(
-            carId,
-            { isAvailable: false },
-            { new: true }
-        );
-        console.log(`🔒 Car ${carId} marked as booked`);
-        return car;
-    }
+      // Add your actual availability logic here
+      const isAvailable = car.isAvailable === true;
+      const totalPrice = this.calculatePrice(car.pricePerDay, startDate, endDate);
 
-    async markCarAsAvailable(carId: string) {
-        const car = await Car.findByIdAndUpdate(
-            carId,
-            { isAvailable: true },
-            { new: true }
-        );
-        console.log(`🔓 Car ${carId} marked as available`);
-        return car;
+      return {
+        isAvailable,
+        car,
+        totalPrice,
+        reason: isAvailable ? '' : 'Car is not available'
+      };
+    } catch (error) {
+      return {
+        isAvailable: false,
+        car: null,
+        totalPrice: 0,
+        reason: 'Error checking availability'
+      };
     }
+  }
 
-    private calculateDays(startDate: Date, endDate: Date): number {
-        const timeDiff = endDate.getTime() - startDate.getTime();
-        const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
-        return days > 0 ? days : 1; // Minimum 1 day
-    }
+  private calculatePrice(pricePerDay: number, startDate: Date, endDate: Date): number {
+    const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    return pricePerDay * days;
+  }
 
-    // These will be implemented later when we have booking data
-    private async getCarBookings(carId: string): Promise<any[]> {
-        // TODO: Integrate with booking service to get existing bookings
-        return [];
-    }
+  /**
+   * Mark car as booked (unavailable)
+   */
+  async markCarAsBooked(carId: string): Promise<any> {
+    try {
+      const car = await Car.findByIdAndUpdate(
+        carId,
+        { isAvailable: false },
+        { new: true }
+      );
+      
+      if (!car) {
+        throw new Error('Car not found');
+      }
 
-    private checkDateConflict(existingBookings: any[], startDate: Date, endDate: Date): boolean {
-        // TODO: Implement date conflict checking
-        return false;
+      // Clear car cache since availability changed
+      await RedisManager.del(`car:${carId}`);
+      
+      console.log(`✅ Car ${carId} marked as booked`);
+      return car;
+    } catch (error) {
+      console.error('❌ Error marking car as booked:', error);
+      throw error;
     }
+  }
+
+  /**
+   * Mark car as available
+   */
+  async markCarAsAvailable(carId: string): Promise<any> {
+    try {
+      const car = await Car.findByIdAndUpdate(
+        carId,
+        { isAvailable: true },
+        { new: true }
+      );
+      
+      if (!car) {
+        throw new Error('Car not found');
+      }
+
+      // Clear car cache since availability changed
+      await RedisManager.del(`car:${carId}`);
+      
+      console.log(`✅ Car ${carId} marked as available`);
+      return car;
+    } catch (error) {
+      console.error('❌ Error marking car as available:', error);
+      throw error;
+    }
+  }
+
+  // Add other existing methods you have...
 }

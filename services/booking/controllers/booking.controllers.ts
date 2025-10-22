@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { BookingService } from '../services/booking.service';
 import { CreateBookingDto } from '../dtos/booking.dto';
 
+
 const bookingService = new BookingService();
 
 export const createBooking = async (req: Request, res: Response) => {

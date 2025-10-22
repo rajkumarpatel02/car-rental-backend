@@ -6,8 +6,15 @@ export const EVENT_TYPES = {
   BOOKING_CANCELLED: 'BOOKING_CANCELLED',
   BOOKING_CONFIRMED: 'BOOKING_CONFIRMED', 
   BOOKING_FAILED: 'BOOKING_FAILED',
-    /** Emitted when car availability is requested (Booking → Car) */
   CAR_AVAILABILITY_REQUEST: 'CAR_AVAILABILITY_REQUEST',
-  /** Emitted when car availability response is sent (Car → Booking) */
   CAR_AVAILABILITY_RESULT: 'CAR_AVAILABILITY_RESULT',
+  SEND_EMAIL: 'SEND_EMAIL',
+  SEND_REMINDER: 'SEND_REMINDER'
+};
+
+export const EXCHANGES = {
+  BOOKING: 'booking_events',
+  CAR: 'car_events',
+  NOTIFICATION: 'notification_events',
+  USER: 'user_events'
 };

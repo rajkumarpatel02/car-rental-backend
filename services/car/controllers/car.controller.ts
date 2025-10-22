@@ -1,14 +1,18 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Car } from '../models/Car';
 import { rabbitMQ } from '../../../shared/events/rabbitmq';
 import { EVENT_TYPES } from '../../../shared/events/eventTypes';
-
 import { CarService } from '../services/car.service';
 
 export const getCars = async (req: Request, res: Response) => {
   try {
     const cars = await Car.find();
-    res.json(cars);
+    res.json({
+      message: 'Cars retrieved successfully',
+      count: cars.length,
+      cars
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching cars', error });
   }
@@ -16,11 +20,17 @@ export const getCars = async (req: Request, res: Response) => {
 
 export const getCarById = async (req: Request, res: Response) => {
   try {
-    const car = await Car.findById(req.params.id);
+    // The car should already be attached by validateCarExists middleware
+    const car = (req as any).car;
+    
     if (!car) {
       return res.status(404).json({ message: 'Car not found' });
     }
-    res.json(car);
+    
+    res.json({
+      message: 'Car retrieved successfully',
+      car
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching car', error });
   }
@@ -35,13 +45,16 @@ export const createCar = async (req: Request, res: Response) => {
     await rabbitMQ.connect();
     await rabbitMQ.sendToQueue(EVENT_TYPES.CAR_CREATED, {
       carId: car._id,
-      make: car.brand,
-      medelName: car.modelName,
+      brand: car.brand,        // Fixed: was 'make'
+      modelName: car.modelName, // Fixed: was 'medelName'
       pricePerDay: car.pricePerDay,
       timestamp: new Date()
     });
 
-    res.status(201).json(car);
+    res.status(201).json({
+      message: 'Car created successfully',
+      car
+    });
   } catch (error) {
     res.status(400).json({ message: 'Error creating car', error });
   }
@@ -53,7 +66,10 @@ export const updateCar = async (req: Request, res: Response) => {
     if (!car) {
       return res.status(404).json({ message: 'Car not found' });
     }
-    res.json(car);
+    res.json({
+      message: 'Car updated successfully',
+      car
+    });
   } catch (error) {
     res.status(400).json({ message: 'Error updating car', error });
   }
@@ -74,14 +90,17 @@ export const deleteCar = async (req: Request, res: Response) => {
 export const getAvailableCars = async (req: Request, res: Response) => {
   try {
     const cars = await Car.find({ isAvailable: true });
-    res.json(cars);
+    res.json({
+      message: 'Available cars retrieved successfully',
+      count: cars.length,
+      cars
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching available cars', error });
   }
 };
 
-//new code for bookings logic 
-
+// Booking logic methods
 const carService = new CarService();
 
 export const checkCarAvailability = async (req: Request, res: Response) => {
@@ -100,7 +119,10 @@ export const checkCarAvailability = async (req: Request, res: Response) => {
       new Date(endDate)
     );
 
-    res.json(result);
+    res.json({
+      message: result.isAvailable ? 'Car is available' : 'Car is not available',
+      ...result
+    });
   } catch (error: any) {
     if (error.message === 'Car not found') {
       return res.status(404).json({ message: error.message });
@@ -114,15 +136,19 @@ export const markCarAsBooked = async (req: Request, res: Response) => {
     const { carId } = req.params;
     const car = await carService.markCarAsBooked(carId);
 
-    if (!car) {
-      return res.status(404).json({ message: 'Car not found' });
-    }
-
     res.json({
       message: 'Car marked as booked successfully',
-      car: { id: car._id, make: car.brand, medelName: car.modelName, isAvailable: car.isAvailable }
+      car: { 
+        id: car._id, 
+        brand: car.brand,      // Fixed: was 'make'
+        modelName: car.modelName, // Fixed: was 'medelName'
+        isAvailable: car.isAvailable 
+      }
     });
   } catch (error: any) {
+    if (error.message === 'Car not found') {
+      return res.status(404).json({ message: error.message });
+    }
     res.status(500).json({ message: 'Error updating car status', error: error.message });
   }
 };
@@ -132,15 +158,19 @@ export const markCarAsAvailable = async (req: Request, res: Response) => {
     const { carId } = req.params;
     const car = await carService.markCarAsAvailable(carId);
 
-    if (!car) {
-      return res.status(404).json({ message: 'Car not found' });
-    }
-
     res.json({
       message: 'Car marked as available successfully',
-      car: { id: car._id, make: car.brand, medelName: car.modelName, isAvailable: car.isAvailable }
+      car: { 
+        id: car._id, 
+        brand: car.brand,      // Fixed: was 'make'
+        modelName: car.modelName, // Fixed: was 'medelName'
+        isAvailable: car.isAvailable 
+      }
     });
   } catch (error: any) {
+    if (error.message === 'Car not found') {
+      return res.status(404).json({ message: error.message });
+    }
     res.status(500).json({ message: 'Error updating car status', error: error.message });
   }
 };

@@ -10,13 +10,16 @@ app.use(express.json());
 app.use('/api/bookings', bookingRoutes);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'Booking service is running', port: PORT });
+  res.json({ 
+    status: 'Booking service is running', 
+    port: PORT,
+    timestamp: new Date().toISOString()
+  });
 });
 
 const connectDB = async () => {
   try {
     await mongoose.connect('mongodb://127.0.0.1:27018/booking_db');
-    await setupBookingEventHandlers()
     console.log('✅ MongoDB Connected: booking_db');
   } catch (error) {
     console.error('❌ Database connection error:', error);
@@ -25,10 +28,22 @@ const connectDB = async () => {
 };
 
 const startServer = async () => {
-  await connectDB();
-  app.listen(PORT, () => {
-    console.log(`📅 Booking service running on port ${PORT}`);
-  });
+  try {
+    await connectDB();
+    
+    // START EVENT HANDLERS
+    console.log('📖 Initializing booking event handlers...');
+    await setupBookingEventHandlers();
+    console.log('✅ Booking event handlers initialized');
+    
+    app.listen(PORT, () => {
+      console.log(`📅 Booking service running on port ${PORT}`);
+      console.log(`📡 Booking service listening for events...`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start booking service:', error);
+    process.exit(1);
+  }
 };
 
 startServer();

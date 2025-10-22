@@ -31,8 +31,10 @@ const startServer = async () => {
   try {
     await connectDB();
     
-    // START EVENT HANDLERS - ADD THIS
+    // START EVENT HANDLERS
+    console.log('🚗 Initializing car event handlers...');
     await setupCarEventHandlers();
+    console.log('✅ Car event handlers initialized');
     
     app.listen(PORT, () => {
       console.log(`🚗 Car service running on port ${PORT}`);
