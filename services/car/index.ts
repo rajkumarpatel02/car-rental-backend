@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import carRoutes from './routes/car.routes';
+import { setupCarEventHandlers } from './events/car.events';
 
 const app = express();
 const PORT = 3002;
@@ -9,7 +10,11 @@ app.use(express.json());
 app.use('/api/cars', carRoutes);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'Car service is running', port: PORT });
+  res.json({ 
+    status: 'Car service is running', 
+    port: PORT,
+    timestamp: new Date().toISOString()
+  });
 });
 
 const connectDB = async () => {
@@ -23,10 +28,20 @@ const connectDB = async () => {
 };
 
 const startServer = async () => {
-  await connectDB();
-  app.listen(PORT, () => {
-    console.log(`🚗 Car service running on port ${PORT}`);
-  });
+  try {
+    await connectDB();
+    
+    // START EVENT HANDLERS - ADD THIS
+    await setupCarEventHandlers();
+    
+    app.listen(PORT, () => {
+      console.log(`🚗 Car service running on port ${PORT}`);
+      console.log(`📡 Car service listening for events...`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start car service:', error);
+    process.exit(1);
+  }
 };
 
 startServer();

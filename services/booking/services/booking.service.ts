@@ -1,55 +1,63 @@
-import { Booking } from '../models/Booking';
-import { CreateBookingDto, BookingResponseDto } from '../dtos/booking.dto';
+import { Booking } from '../../booking/models/Booking';
+import { CreateBookingDto } from '../../booking/dtos/booking.dto';
+import { rabbitMQ } from '../../../shared/events/rabbitmq';
+import { EVENT_TYPES } from '../../../shared/events/eventTypes';
 
+// Contains all booking business logic
 export class BookingService {
+  
+  // STEP 2: Create booking with "pending" status
   async createBooking(createBookingDto: CreateBookingDto, userId: string) {
-  console.log('🔍 Creating booking for user:', userId);
-  
-  const booking = await Booking.create({
-    userId,
-    carId: createBookingDto.carId,
-    startDate: new Date(createBookingDto.startDate),
-    endDate: new Date(createBookingDto.endDate),
-    totalPrice: 250,
-    status: 'pending',
-    paymentStatus: 'pending'
-  });
-  
-  console.log('✅ Booking saved to MongoDB:', booking._id);
-  return this.mapToBookingResponse(booking);
-}
+    const booking = await Booking.create({
+      userId,
+      carId: createBookingDto.carId,
+      startDate: new Date(createBookingDto.startDate),
+      endDate: new Date(createBookingDto.endDate),
+      totalPrice: 0,
+      status: 'pending', // IMMEDIATE STATUS
+      paymentStatus: 'pending'
+    });
 
-  async getUserBookings(userId: string): Promise<BookingResponseDto[]> {
-    const bookings = await Booking.find({ userId }).sort({ createdAt: -1 });
-    return bookings.map(booking => this.mapToBookingResponse(booking));
-  }
+    // STEP 3: Send availability request
+    await rabbitMQ.sendToQueue(EVENT_TYPES.CAR_AVAILABILITY_REQUEST, {
+      bookingId: booking._id.toString(),
+      carId: createBookingDto.carId,
+      startDate: createBookingDto.startDate,
+      endDate: createBookingDto.endDate,
+      userId
+    });
 
-  async getBookingById(bookingId: string, userId: string): Promise<BookingResponseDto> {
-    const booking = await Booking.findOne({ _id: bookingId, userId });
-    if (!booking) {
-      throw new Error('Booking not found');
-    }
     return this.mapToBookingResponse(booking);
   }
 
-  private calculatePrice(startDate: string, endDate: string, pricePerDay: number): number {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24));
-    return days * pricePerDay;
+  // STEP 9: Get user bookings
+  async getUserBookings(userId: string) {
+    return await Booking.find({ userId });
   }
 
-  private mapToBookingResponse(booking: any): BookingResponseDto {
+  // STEP 9: Get single booking
+  async getBookingById(bookingId: string, userId: string) {
+    return await Booking.findOne({ _id: bookingId, userId });
+  }
+
+  // STEP 8: Update booking status when car service responds
+  async updateBookingStatus(bookingId: string, status: string, totalPrice?: number) {
+    const updateData: any = { status };
+    if (totalPrice) updateData.totalPrice = totalPrice;
+    
+    return await Booking.findByIdAndUpdate(bookingId, updateData, { new: true });
+  }
+
+  private mapToBookingResponse(booking: any) {
     return {
-      id: booking._id.toString(),
+      id: booking._id,
       userId: booking.userId,
       carId: booking.carId,
       startDate: booking.startDate,
       endDate: booking.endDate,
       totalPrice: booking.totalPrice,
       status: booking.status,
-      paymentStatus: booking.paymentStatus,
-      createdAt: booking.createdAt
+      paymentStatus: booking.paymentStatus
     };
   }
 }

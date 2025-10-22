@@ -4,20 +4,20 @@ export interface CreateBookingDto {
   endDate: string;
 }
 
-export interface BookingResponseDto {
-  id: string;
-  userId: string;
-  carId: string;
+export interface BookingResposeDto {
+  id : String;
+  userId : string;
+  carId : string;
   startDate: Date;
-  endDate: Date;
+  endDate : Date;
   totalPrice: number;
   status: string;
   paymentStatus: string;
+  failureReason: string;
   createdAt: Date;
 }
 
-export interface BookingRequestDto {
-  carId: string;
-  startDate: Date;
-  endDate: Date;
+export interface confirmBookingDto {
+  paymentData : any;  
+  // payment gateway ka resopose.
 }

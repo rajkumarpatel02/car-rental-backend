@@ -16,37 +16,44 @@ class RabbitMQ {
     }
   }
 
+  async getChannel(): Promise<any> {
+    if (!this.channel) {
+      await this.connect();
+    }
+    return this.channel;
+  }
+
   async createQueue(queueName: string): Promise<void> {
-    if (!this.channel) await this.connect();
-    await this.channel.assertQueue(queueName, { durable: true });
+    const channel = await this.getChannel();
+    await channel.assertQueue(queueName, { durable: true });
     console.log(`✅ Queue created: ${queueName}`);
   }
 
   async sendToQueue(queueName: string, message: any): Promise<void> {
-    if (!this.channel) await this.connect();
-    this.channel.sendToQueue(queueName, Buffer.from(JSON.stringify(message)), {
+    const channel = await this.getChannel();
+    channel.sendToQueue(queueName, Buffer.from(JSON.stringify(message)), {
       persistent: true
     });
     console.log(`📤 Message sent to ${queueName}:`, message);
   }
 
   async consumeQueue(queueName: string, callback: (message: any) => void): Promise<void> {
-    if (!this.channel) await this.connect();
-    
-    await this.channel.assertQueue(queueName, { durable: true });
-    
+    const channel = await this.getChannel();
+
+    await channel.assertQueue(queueName, { durable: true });
+
     console.log(`👂 Listening to queue: ${queueName}`);
-    
-    await this.channel.consume(queueName, (msg: any) => {
+
+    await channel.consume(queueName, (msg: any) => {
       if (msg !== null) {
         try {
           const content = JSON.parse(msg.content.toString());
           console.log(`📥 Message received from ${queueName}:`, content);
           callback(content);
-          this.channel.ack(msg);
+          channel.ack(msg);
         } catch (error) {
           console.error('❌ Error processing message:', error);
-          this.channel.nack(msg, false, false);
+          channel.reject(msg, false);
         }
       }
     });

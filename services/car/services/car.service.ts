@@ -2,43 +2,45 @@ import { Car } from '../models/Car';
 
 export class CarService {
     async checkCarAvailability(carId: string, startDate: Date, endDate: Date) {
+        console.log(`🔍 Checking availability for car ${carId} from ${startDate} to ${endDate}`);
+        
         const car = await Car.findById(carId);
         if (!car) {
-            throw new Error('Car not found');
+            console.log(`❌ Car ${carId} not found`);
+            return {
+                isAvailable: false,
+                reason: 'Car not found'
+            };
         }
 
+        // Check if car is marked as available
         if (!car.isAvailable) {
+            console.log(`❌ Car ${carId} is marked as unavailable`);
             return {
                 isAvailable: false,
-                reason: 'Car is currently not available'
+                reason: 'Car is currently not available for booking'
             };
         }
 
-        // Check if car is already booked for these dates
-        const existingBookings = await this.getCarBookings(carId);
-        const hasConflict = this.checkDateConflict(existingBookings, startDate, endDate);
-
-        if (hasConflict) {
-            return {
-                isAvailable: false,
-                reason: 'Car is already booked for the selected dates'
-            };
-        }
-
-        // Calculate price
+        // TODO: Check for existing bookings (will implement when booking service is ready)
+        // For now, we'll assume no conflicts and calculate price
+        
         const days = this.calculateDays(startDate, endDate);
         const totalPrice = days * car.pricePerDay;
+
+        console.log(`✅ Car ${carId} is available. Price: ${totalPrice} for ${days} days`);
 
         return {
             isAvailable: true,
             car: {
                 id: car._id,
-                make: car.brand,
-                medelName: car.model,
+                brand: car.brand,
+                modelName: car.modelName,
                 pricePerDay: car.pricePerDay
             },
             totalPrice,
-            days
+            days,
+            reason: null
         };
     }
 
@@ -48,6 +50,7 @@ export class CarService {
             { isAvailable: false },
             { new: true }
         );
+        console.log(`🔒 Car ${carId} marked as booked`);
         return car;
     }
 
@@ -57,23 +60,24 @@ export class CarService {
             { isAvailable: true },
             { new: true }
         );
+        console.log(`🔓 Car ${carId} marked as available`);
         return car;
     }
 
     private calculateDays(startDate: Date, endDate: Date): number {
         const timeDiff = endDate.getTime() - startDate.getTime();
-        return Math.ceil(timeDiff / (1000 * 3600 * 24));
+        const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        return days > 0 ? days : 1; // Minimum 1 day
     }
 
+    // These will be implemented later when we have booking data
     private async getCarBookings(carId: string): Promise<any[]> {
-        // This will be implemented when Booking Service is ready
-        // For now, return empty array (no conflict checking)
+        // TODO: Integrate with booking service to get existing bookings
         return [];
     }
 
     private checkDateConflict(existingBookings: any[], startDate: Date, endDate: Date): boolean {
-        // This will be implemented when Booking Service is ready
-        // For now, return false (no conflicts)
+        // TODO: Implement date conflict checking
         return false;
     }
 }

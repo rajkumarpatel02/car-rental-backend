@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import bookingRoutes from './routes/booking.routes';
+import { setupBookingEventHandlers } from './events/booking.events';
 
 const app = express();
 const PORT = 3003;
@@ -15,6 +16,7 @@ app.get('/health', (req, res) => {
 const connectDB = async () => {
   try {
     await mongoose.connect('mongodb://127.0.0.1:27018/booking_db');
+    await setupBookingEventHandlers()
     console.log('✅ MongoDB Connected: booking_db');
   } catch (error) {
     console.error('❌ Database connection error:', error);

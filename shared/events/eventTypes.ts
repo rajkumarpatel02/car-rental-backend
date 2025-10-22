@@ -5,5 +5,9 @@ export const EVENT_TYPES = {
   BOOKING_CREATED: 'BOOKING_CREATED',
   BOOKING_CANCELLED: 'BOOKING_CANCELLED',
   BOOKING_CONFIRMED: 'BOOKING_CONFIRMED', 
-  BOOKING_FAILED: 'BOOKING_FAILED'
+  BOOKING_FAILED: 'BOOKING_FAILED',
+    /** Emitted when car availability is requested (Booking → Car) */
+  CAR_AVAILABILITY_REQUEST: 'CAR_AVAILABILITY_REQUEST',
+  /** Emitted when car availability response is sent (Car → Booking) */
+  CAR_AVAILABILITY_RESULT: 'CAR_AVAILABILITY_RESULT',
 };
