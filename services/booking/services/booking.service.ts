@@ -47,7 +47,7 @@ export class BookingService {
     // Try to get from cache first
     const cachedBookings = await RedisManager.get(cacheKey);
     if (cachedBookings) {
-      console.log(`✅ Returning cached bookings for user: ${userId}`);
+      // console.log(`✅ Returning cached bookings for user: ${userId}`);
       return cachedBookings;
     }
 
@@ -66,7 +66,7 @@ export class BookingService {
     // Try to get from cache first
     const cachedBooking = await RedisManager.getCachedBooking(bookingId);
     if (cachedBooking && cachedBooking.userId === userId) {
-      console.log(`✅ Returning cached booking: ${bookingId}`);
+      // console.log(`✅ Returning cached booking: ${bookingId}`);
       return this.mapToBookingResponse(cachedBooking);
     }
 

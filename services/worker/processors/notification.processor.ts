@@ -4,7 +4,7 @@ import { RedisManager } from '../../../shared/redis/redis.config'; // Import Red
 
 export class NotificationProcessor {
   async initialize() {
-    console.log('🔔 Notification Processor: Initializing...');
+    // console.log('🔔 Notification Processor: Initializing...');
 
     // Subscribe to booking events for notifications
     await exchangeManager.subscribeToExchange(
@@ -20,7 +20,7 @@ export class NotificationProcessor {
       this.handleCarEvent.bind(this)
     );
 
-    console.log('✅ Notification Processor: Initialized and listening for events');
+    // console.log('✅ Notification Processor: Initialized and listening for events');
   }
 
   private async handleBookingEvent(message: any) {

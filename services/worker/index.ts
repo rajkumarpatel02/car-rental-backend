@@ -11,39 +11,39 @@ import { reminderEmailWorker } from './jobs/sendReminderEmail.job';
 
 const startWorker = async () => {
   try {
-    console.log('👷 Worker: Starting worker service...');
+    // console.log('👷 Worker: Starting worker service...');
 
     // Initialize RabbitMQ exchanges
-    console.log('👷 Worker: Connecting to RabbitMQ exchanges...');
+    // console.log('👷 Worker: Connecting to RabbitMQ exchanges...');
     await exchangeManager.connect();
     console.log('✅ Worker: Connected to RabbitMQ exchanges');
 
     // Initialize email workers
-    console.log('👷 Worker: Starting email workers...');
+    // console.log('👷 Worker: Starting email workers...');
     welcomeEmailWorker();
     bookingEmailWorker();
     reminderEmailWorker();
-    console.log('✅ Email workers started');
+    // console.log('✅ Email workers started');
 
     // Initialize processors
-    console.log('👷 Worker: Initializing processors...');
+    // console.log('👷 Worker: Initializing processors...');
     const emailProcessor = new EmailProcessor();
     const notificationProcessor = new NotificationProcessor();
     
     await emailProcessor.initialize();
     await notificationProcessor.initialize();
 
-    console.log('✅ Worker: All processors initialized');
+    // console.log('✅ Worker: All processors initialized');
 
     // Setup direct queue listeners for backward compatibility
-    console.log('👷 Worker: Setting up legacy queue listeners...');
+    // console.log('👷 Worker: Setting up legacy queue listeners...');
     
     await exchangeManager.subscribeToExchange(
       EXCHANGES.USER,
       'worker_user_events',
       async (message) => {
         if (message.type === EVENT_TYPES.USER_CREATED) {
-          console.log('👷 Worker: RECEIVED USER_CREATED event for:', message.data.email);
+          // console.log('👷 Worker: RECEIVED USER_CREATED event for:', message.data.email);
           
           const { SendWelcomeEmailJob } = await import('./jobs/sendWelcomeEmail.job');
           await SendWelcomeEmailJob.add({

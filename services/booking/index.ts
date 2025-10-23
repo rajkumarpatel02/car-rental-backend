@@ -34,11 +34,11 @@ const startServer = async () => {
     // START EVENT HANDLERS
     console.log('📖 Initializing booking event handlers...');
     await setupBookingEventHandlers();
-    console.log('✅ Booking event handlers initialized');
+    // console.log('✅ Booking event handlers initialized');
     
     app.listen(PORT, () => {
       console.log(`📅 Booking service running on port ${PORT}`);
-      console.log(`📡 Booking service listening for events...`);
+      // console.log(`📡 Booking service listening for events...`);
     });
   } catch (error) {
     console.error('❌ Failed to start booking service:', error);

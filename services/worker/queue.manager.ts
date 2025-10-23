@@ -24,7 +24,7 @@ export class QueueManager {
     });
 
     this.queues.set(name, queue);
-    console.log(`✅ Created queue: ${name}`);
+    // console.log(`✅ Created queue: ${name}`);
     return queue;
   }
 
@@ -39,7 +39,7 @@ export class QueueManager {
     });
 
     worker.on('completed', (job) => {
-      console.log(`✅ Job ${job.id} completed successfully on queue ${queueName}`);
+      // console.log(`✅ Job ${job.id} completed successfully on queue ${queueName}`);
     });
 
     worker.on('failed', (job, err) => {
@@ -51,7 +51,7 @@ export class QueueManager {
     });
 
     this.workers.set(queueName, worker);
-    console.log(`✅ Created worker for queue: ${queueName}`);
+    // console.log(`✅ Created worker for queue: ${queueName}`);
     return worker;
   }
 
@@ -62,12 +62,12 @@ export class QueueManager {
   static async closeAll(): Promise<void> {
     for (const [name, worker] of this.workers) {
       await worker.close();
-      console.log(`🔒 Closed worker: ${name}`);
+      // console.log(`🔒 Closed worker: ${name}`);
     }
     
     for (const [name, queue] of this.queues) {
       await queue.close();
-      console.log(`🔒 Closed queue: ${name}`);
+      // console.log(`🔒 Closed queue: ${name}`);
     }
     
     this.workers.clear();

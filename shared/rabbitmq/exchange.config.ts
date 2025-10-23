@@ -56,7 +56,7 @@ export class ExchangeManager {
     // Bind queue to exchange
     await channel.bindQueue(queue.queue, exchange, '');
     
-    console.log(`✅ Subscribed to exchange "${exchange}" with queue "${queueName}"`);
+    // console.log(`✅ Subscribed to exchange "${exchange}" with queue "${queueName}"`);
     
     // Consume messages
     await channel.consume(queue.queue, (msg: any) => {

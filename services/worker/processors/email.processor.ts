@@ -30,7 +30,7 @@ export class EmailProcessor {
         this.handleBookingEvent.bind(this)
       );
 
-      console.log('✅ Email Processor: Initialized and listening for events');
+      // console.log('✅ Email Processor: Initialized and listening for events');
     } catch (error) {
       console.error('❌ Email Processor: Failed to initialize:', error);
       throw error;
