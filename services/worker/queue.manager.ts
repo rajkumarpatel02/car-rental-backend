@@ -39,7 +39,7 @@ export class QueueManager {
     });
 
     worker.on('completed', (job) => {
-      // console.log(`✅ Job ${job.id} completed successfully on queue ${queueName}`);
+      console.log(`✅ Job ${job.id} completed successfully on queue ${queueName}`);
     });
 
     worker.on('failed', (job, err) => {
