@@ -3,9 +3,27 @@ import { EXCHANGES, EVENT_TYPES } from '../../../shared/events/eventTypes';
 import { SendWelcomeEmailJob } from '../jobs/sendWelcomeEmail.job';
 import { SendBookingEmailJob } from '../jobs/sendBookingEmail.job';
 import { SendReminderEmailJob } from '../jobs/sendReminderEmail.job';
+import { RedisManager } from '../../../shared/redis/redis.config';
+
+interface BookingData {
+  bookingId: string;
+  userEmail?: string;
+  userName?: string;
+  carDetails?: any;
+  bookingDetails?: any;
+}
+
+interface CustomNotificationData {
+  to: string;
+  subject: string;
+  template: string;
+  context: any;
+}
 
 export class EmailProcessor {
-  async initialize() {
+  private processedMessages: Set<string> = new Set();
+
+  async initialize(): Promise<void> {
     console.log('📧 Email Processor: Initializing...');
 
     try {
@@ -30,32 +48,34 @@ export class EmailProcessor {
         this.handleBookingEvent.bind(this)
       );
 
-      // console.log('✅ Email Processor: Initialized and listening for events');
     } catch (error) {
       console.error('❌ Email Processor: Failed to initialize:', error);
       throw error;
     }
   }
 
-  private async handleNotificationEvent(message: any) {
+  private async handleNotificationEvent(message: any): Promise<void> {
     try {
+      const messageId = this.getMessageId(message);
+      if (await this.isDuplicate(messageId)) return;
+
       console.log(`📧 Email Processor: Received notification event - ${message.type}`);
       
       switch (message.type) {
         case EVENT_TYPES.SEND_EMAIL:
           await this.handleSendEmail(message.data);
           break;
-        
-        default:
-          // console.log(`📧 Email Processor: Unhandled notification event type: ${message.type}`);
       }
     } catch (error) {
       console.error('❌ Email Processor: Error processing notification event:', error);
     }
   }
 
-  private async handleUserEvent(message: any) {
+  private async handleUserEvent(message: any): Promise<void> {
     try {
+      const messageId = this.getMessageId(message);
+      if (await this.isDuplicate(messageId)) return;
+
       console.log(`📧 Email Processor: Received user event - ${message.type}`);
       
       if (message.type === EVENT_TYPES.USER_CREATED) {
@@ -64,16 +84,17 @@ export class EmailProcessor {
           email: message.data.email,
           name: message.data.name
         });
-        
-        // console.log(`✅ Welcome email scheduled for: ${message.data.email}`);
       }
     } catch (error) {
       console.error('❌ Email Processor: Error processing user event:', error);
     }
   }
 
-  private async handleBookingEvent(message: any) {
+  private async handleBookingEvent(message: any): Promise<void> {
     try {
+      const messageId = this.getMessageId(message);
+      if (await this.isDuplicate(messageId)) return;
+
       console.log(`📧 Email Processor: Received booking event - ${message.type}`);
       
       switch (message.type) {
@@ -92,24 +113,19 @@ export class EmailProcessor {
         case EVENT_TYPES.BOOKING_FAILED:
           await this.handleBookingFailed(message.data);
           break;
-        
-        default:
-          // console.log(`📧 Email Processor: Unhandled booking event: ${message.type}`);
       }
     } catch (error) {
       console.error('❌ Email Processor: Error processing booking event:', error);
     }
   }
 
-  private async handleSendEmail(data: any) {
-    // console.log('📧 Processing generic email send request:', data);
+  private async handleSendEmail(data: any): Promise<void> {
     // Generic email handler for custom email types
-    // You can extend this based on your email template needs
   }
 
-  private async handleBookingConfirmed(bookingData: any) {
+  private async handleBookingConfirmed(bookingData: BookingData): Promise<void> {
     try {
-      // console.log(`📧 Processing booking confirmation for: ${bookingData.bookingId}`);
+      console.log(`📧 Processing booking confirmation for: ${bookingData.bookingId}`);
       
       await SendBookingEmailJob.add({
         bookingId: bookingData.bookingId,
@@ -120,8 +136,6 @@ export class EmailProcessor {
         emailType: 'confirmation'
       });
       
-      // console.log(`✅ Booking confirmation email scheduled for: ${bookingData.bookingId}`);
-      
       // Schedule reminder emails
       await this.scheduleReminderEmails(bookingData);
       
@@ -130,7 +144,7 @@ export class EmailProcessor {
     }
   }
 
-  private async handleBookingCancelled(bookingData: any) {
+  private async handleBookingCancelled(bookingData: BookingData): Promise<void> {
     try {
       console.log(`📧 Processing booking cancellation for: ${bookingData.bookingId}`);
       
@@ -143,18 +157,15 @@ export class EmailProcessor {
         emailType: 'cancellation'
       });
       
-      // console.log(`✅ Booking cancellation email scheduled for: ${bookingData.bookingId}`);
-      
     } catch (error) {
       console.error('❌ Error handling booking cancellation:', error);
     }
   }
 
-  private async handleBookingCreated(bookingData: any) {
+  private async handleBookingCreated(bookingData: BookingData): Promise<void> {
     try {
-      // console.log(`📧 Processing booking creation for: ${bookingData.bookingId}`);
+      console.log(`📧 Processing booking creation for: ${bookingData.bookingId}`);
       
-      // Send "booking received" email
       await SendBookingEmailJob.add({
         bookingId: bookingData.bookingId,
         userEmail: bookingData.userEmail || 'user@example.com',
@@ -164,18 +175,15 @@ export class EmailProcessor {
         emailType: 'confirmation'
       });
       
-      // console.log(`✅ Booking creation email scheduled for: ${bookingData.bookingId}`);
-      
     } catch (error) {
       console.error('❌ Error handling booking creation:', error);
     }
   }
 
-  private async handleBookingFailed(bookingData: any) {
+  private async handleBookingFailed(bookingData: BookingData): Promise<void> {
     try {
       console.log(`📧 Processing booking failure for: ${bookingData.bookingId}`);
       
-      // Send failure notification email
       await SendBookingEmailJob.add({
         bookingId: bookingData.bookingId,
         userEmail: bookingData.userEmail || 'user@example.com',
@@ -185,14 +193,12 @@ export class EmailProcessor {
         emailType: 'cancellation'
       });
       
-      // console.log(`✅ Booking failure email scheduled for: ${bookingData.bookingId}`);
-      
     } catch (error) {
       console.error('❌ Error handling booking failure:', error);
     }
   }
 
-  private async scheduleReminderEmails(bookingData: any) {
+  private async scheduleReminderEmails(bookingData: BookingData): Promise<void> {
     try {
       const { bookingId, userEmail, userName, bookingDetails } = bookingData;
       
@@ -214,7 +220,7 @@ export class EmailProcessor {
         bookingDetails: bookingDetails || bookingData
       });
       
-      // console.log(`✅ Reminder emails scheduled for booking: ${bookingId}`);
+      console.log(`✅ Reminder emails scheduled for booking: ${bookingId}`);
       
     } catch (error) {
       console.error('❌ Error scheduling reminder emails:', error);
@@ -222,31 +228,31 @@ export class EmailProcessor {
   }
 
   // Utility method to send custom email notifications
-  async sendCustomNotification(data: {
-    to: string;
-    subject: string;
-    template: string;
-    context: any;
-  }) {
+  async sendCustomNotification(data: CustomNotificationData): Promise<void> {
     try {
       console.log(`📧 Sending custom notification to: ${data.to}`);
       
-      // Here you can integrate with your email service
-      // For now, we'll log the intent
-      console.log('Custom email details:', {
-        to: data.to,
-        subject: data.subject,
-        template: data.template
-      });
-      
-      // You can extend this to actually send emails via:
-      // - SendGrid
-      // - Mailgun  
-      // - Nodemailer
-      // - AWS SES
+      // Integration with email service would go here
       
     } catch (error) {
       console.error('❌ Error sending custom notification:', error);
     }
+  }
+
+  private getMessageId(message: any): string {
+    return `${message.type}-${message.data?.bookingId || message.data?.userId || Date.now()}`;
+  }
+
+  private async isDuplicate(messageId: string): Promise<boolean> {
+    const key = `email_processed:${messageId}`;
+    const isDuplicate = await RedisManager.exists(key);
+    
+    if (!isDuplicate) {
+      await RedisManager.set(key, 'true', 3600); // 1 hour TTL
+      return false;
+    }
+    
+    console.log(`🔄 Skipping duplicate email message: ${messageId}`);
+    return true;
   }
 }

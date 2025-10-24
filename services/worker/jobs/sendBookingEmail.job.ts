@@ -11,13 +11,8 @@ export class SendBookingEmailJob {
     bookingDetails: any;
     emailType?: 'confirmation' | 'modification' | 'cancellation';
   }): Promise<void> {
-    await this.queue.add('sendBookingEmail', data, {
-      backoff: {
-        type: 'exponential',
-        delay: 1000
-      }
-    });
-    console.log(`✅ Booking email job added for booking: ${data.bookingId}`);
+    await this.queue.add('sendBookingEmail', data);
+    // console.log(`✅ Booking email job added for booking: ${data.bookingId}`);
   }
 }
 

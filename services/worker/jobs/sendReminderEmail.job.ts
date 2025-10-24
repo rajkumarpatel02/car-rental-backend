@@ -28,15 +28,9 @@ export class SendReminderEmailJob {
         break;
     }
 
-    await this.queue.add('sendReminder', data, { 
-      delay,
-      backoff: {
-        type: 'exponential',
-        delay: 1000
-      }
-    });
+    await this.queue.add('sendReminder', data);
     
-    console.log(`✅ Reminder email job added for: ${data.reminderType} - ${data.bookingId}`);
+    // console.log(`✅ Reminder email job added for: ${data.reminderType} - ${data.bookingId}`);
   }
 }
 
@@ -45,11 +39,11 @@ export const reminderEmailWorker = () => {
   return QueueManager.createWorker('email-reminder', async (job) => {
     const { userEmail, userName, reminderType, bookingId } = job.data;
     
-    console.log(`⏰ Processing ${reminderType} reminder for booking: ${bookingId}`);
+    // console.log(`⏰ Processing ${reminderType} reminder for booking: ${bookingId}`);
     
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    console.log(`✅ ${reminderType} reminder sent to ${userEmail} for booking ${bookingId}`);
+    // console.log(`✅ ${reminderType} reminder sent to ${userEmail} for booking ${bookingId}`);
     
     return { 
       success: true, 

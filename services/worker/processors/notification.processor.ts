@@ -1,11 +1,24 @@
 import { exchangeManager } from '../../../shared/rabbitmq/exchange.config';
 import { EXCHANGES, EVENT_TYPES } from '../../../shared/events/eventTypes';
-import { RedisManager } from '../../../shared/redis/redis.config'; // Import RedisManager
+import { RedisManager } from '../../../shared/redis/redis.config';
+
+interface BookingData {
+  bookingId: string;
+  status?: string;
+  updatedAt?: Date;
+}
+
+interface CarAvailabilityData {
+  bookingId: string;
+  isAvailable: boolean;
+}
+
+interface CarData {
+  carId: string;
+}
 
 export class NotificationProcessor {
-  async initialize() {
-    // console.log('🔔 Notification Processor: Initializing...');
-
+  async initialize(): Promise<void> {
     // Subscribe to booking events for notifications
     await exchangeManager.subscribeToExchange(
       EXCHANGES.BOOKING,
@@ -19,12 +32,13 @@ export class NotificationProcessor {
       'notification_processor_car',
       this.handleCarEvent.bind(this)
     );
-
-    // console.log('✅ Notification Processor: Initialized and listening for events');
   }
 
-  private async handleBookingEvent(message: any) {
+  private async handleBookingEvent(message: any): Promise<void> {
     try {
+      const messageId = this.getMessageId(message);
+      if (await this.isDuplicate(messageId)) return;
+
       console.log(`🔔 Notification Processor: Received booking event - ${message.type}`);
       
       switch (message.type) {
@@ -43,17 +57,17 @@ export class NotificationProcessor {
         case EVENT_TYPES.BOOKING_FAILED:
           await this.handleBookingFailed(message.data);
           break;
-        
-        default:
-          // console.log(`🔔 Notification Processor: Unhandled booking event: ${message.type}`);
       }
     } catch (error) {
       console.error('❌ Notification Processor: Error processing booking event:', error);
     }
   }
 
-  private async handleCarEvent(message: any) {
+  private async handleCarEvent(message: any): Promise<void> {
     try {
+      const messageId = this.getMessageId(message);
+      if (await this.isDuplicate(messageId)) return;
+
       console.log(`🔔 Notification Processor: Received car event - ${message.type}`);
       
       switch (message.type) {
@@ -64,25 +78,20 @@ export class NotificationProcessor {
         case EVENT_TYPES.CAR_UPDATED:
           await this.handleCarUpdated(message.data);
           break;
-        
-        default:
-          // console.log(`🔔 Notification Processor: Unhandled car event: ${message.type}`);
       }
     } catch (error) {
       console.error('❌ Notification Processor: Error processing car event:', error);
     }
   }
 
-  private async handleBookingCreated(bookingData: any) {
+  private async handleBookingCreated(bookingData: BookingData): Promise<void> {
     console.log(`🔔 Booking created notification: ${bookingData.bookingId}`);
     
     // Cache booking data for quick access
     await RedisManager.cacheBooking(bookingData.bookingId, bookingData);
-    
-    // TODO: Send push notification, in-app notification, etc.
   }
 
-  private async handleBookingConfirmed(bookingData: any) {
+  private async handleBookingConfirmed(bookingData: BookingData): Promise<void> {
     console.log(`🔔 Booking confirmed notification: ${bookingData.bookingId}`);
     
     // Update cached booking data
@@ -91,11 +100,9 @@ export class NotificationProcessor {
       status: 'confirmed',
       updatedAt: new Date()
     });
-    
-    // TODO: Send confirmation notification
   }
 
-  private async handleBookingCancelled(bookingData: any) {
+  private async handleBookingCancelled(bookingData: BookingData): Promise<void> {
     console.log(`🔔 Booking cancelled notification: ${bookingData.bookingId}`);
     
     // Update cached booking data
@@ -104,11 +111,9 @@ export class NotificationProcessor {
       status: 'cancelled',
       updatedAt: new Date()
     });
-    
-    // TODO: Send cancellation notification
   }
 
-  private async handleBookingFailed(bookingData: any) {
+  private async handleBookingFailed(bookingData: BookingData): Promise<void> {
     console.log(`🔔 Booking failed notification: ${bookingData.bookingId}`);
     
     // Update cached booking data
@@ -117,26 +122,37 @@ export class NotificationProcessor {
       status: 'failed',
       updatedAt: new Date()
     });
-    
-    // TODO: Send failure notification
   }
 
-  private async handleCarAvailabilityResult(availabilityData: any) {
+  private async handleCarAvailabilityResult(availabilityData: CarAvailabilityData): Promise<void> {
     console.log(`🔔 Car availability result: ${availabilityData.bookingId} - ${availabilityData.isAvailable ? 'Available' : 'Not Available'}`);
     
     // Cache availability result using standard set method
     const cacheKey = `availability_result:${availabilityData.bookingId}`;
     await RedisManager.set(cacheKey, availabilityData, 300); // 5 minutes cache
-    
-    // TODO: Send real-time notification to user about availability
   }
 
-  private async handleCarUpdated(carData: any) {
+  private async handleCarUpdated(carData: CarData): Promise<void> {
     console.log(`🔔 Car updated notification: ${carData.carId}`);
     
     // Clear cached car data using standard del method
     await RedisManager.del(`car:${carData.carId}`);
+  }
+
+  private getMessageId(message: any): string {
+    return `${message.type}-${message.data?.bookingId || message.data?.carId || Date.now()}`;
+  }
+
+  private async isDuplicate(messageId: string): Promise<boolean> {
+    const key = `notification_processed:${messageId}`;
+    const isDuplicate = await RedisManager.exists(key);
     
-    // TODO: Notify users who have upcoming bookings for this car
+    if (!isDuplicate) {
+      await RedisManager.set(key, 'true', 3600); // 1 hour TTL
+      return false;
+    }
+    
+    console.log(`🔄 Skipping duplicate notification message: ${messageId}`);
+    return true;
   }
 }
