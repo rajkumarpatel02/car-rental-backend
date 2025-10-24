@@ -47,7 +47,7 @@ export class EmailProcessor {
           break;
         
         default:
-          console.log(`📧 Email Processor: Unhandled notification event type: ${message.type}`);
+          // console.log(`📧 Email Processor: Unhandled notification event type: ${message.type}`);
       }
     } catch (error) {
       console.error('❌ Email Processor: Error processing notification event:', error);
@@ -65,7 +65,7 @@ export class EmailProcessor {
           name: message.data.name
         });
         
-        console.log(`✅ Welcome email scheduled for: ${message.data.email}`);
+        // console.log(`✅ Welcome email scheduled for: ${message.data.email}`);
       }
     } catch (error) {
       console.error('❌ Email Processor: Error processing user event:', error);
@@ -94,7 +94,7 @@ export class EmailProcessor {
           break;
         
         default:
-          console.log(`📧 Email Processor: Unhandled booking event: ${message.type}`);
+          // console.log(`📧 Email Processor: Unhandled booking event: ${message.type}`);
       }
     } catch (error) {
       console.error('❌ Email Processor: Error processing booking event:', error);
@@ -102,14 +102,14 @@ export class EmailProcessor {
   }
 
   private async handleSendEmail(data: any) {
-    console.log('📧 Processing generic email send request:', data);
+    // console.log('📧 Processing generic email send request:', data);
     // Generic email handler for custom email types
     // You can extend this based on your email template needs
   }
 
   private async handleBookingConfirmed(bookingData: any) {
     try {
-      console.log(`📧 Processing booking confirmation for: ${bookingData.bookingId}`);
+      // console.log(`📧 Processing booking confirmation for: ${bookingData.bookingId}`);
       
       await SendBookingEmailJob.add({
         bookingId: bookingData.bookingId,
@@ -120,7 +120,7 @@ export class EmailProcessor {
         emailType: 'confirmation'
       });
       
-      console.log(`✅ Booking confirmation email scheduled for: ${bookingData.bookingId}`);
+      // console.log(`✅ Booking confirmation email scheduled for: ${bookingData.bookingId}`);
       
       // Schedule reminder emails
       await this.scheduleReminderEmails(bookingData);
@@ -143,7 +143,7 @@ export class EmailProcessor {
         emailType: 'cancellation'
       });
       
-      console.log(`✅ Booking cancellation email scheduled for: ${bookingData.bookingId}`);
+      // console.log(`✅ Booking cancellation email scheduled for: ${bookingData.bookingId}`);
       
     } catch (error) {
       console.error('❌ Error handling booking cancellation:', error);
@@ -152,7 +152,7 @@ export class EmailProcessor {
 
   private async handleBookingCreated(bookingData: any) {
     try {
-      console.log(`📧 Processing booking creation for: ${bookingData.bookingId}`);
+      // console.log(`📧 Processing booking creation for: ${bookingData.bookingId}`);
       
       // Send "booking received" email
       await SendBookingEmailJob.add({
@@ -164,7 +164,7 @@ export class EmailProcessor {
         emailType: 'confirmation'
       });
       
-      console.log(`✅ Booking creation email scheduled for: ${bookingData.bookingId}`);
+      // console.log(`✅ Booking creation email scheduled for: ${bookingData.bookingId}`);
       
     } catch (error) {
       console.error('❌ Error handling booking creation:', error);
@@ -185,7 +185,7 @@ export class EmailProcessor {
         emailType: 'cancellation'
       });
       
-      console.log(`✅ Booking failure email scheduled for: ${bookingData.bookingId}`);
+      // console.log(`✅ Booking failure email scheduled for: ${bookingData.bookingId}`);
       
     } catch (error) {
       console.error('❌ Error handling booking failure:', error);
@@ -214,7 +214,7 @@ export class EmailProcessor {
         bookingDetails: bookingDetails || bookingData
       });
       
-      console.log(`✅ Reminder emails scheduled for booking: ${bookingId}`);
+      // console.log(`✅ Reminder emails scheduled for booking: ${bookingId}`);
       
     } catch (error) {
       console.error('❌ Error scheduling reminder emails:', error);

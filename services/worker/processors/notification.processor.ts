@@ -45,7 +45,7 @@ export class NotificationProcessor {
           break;
         
         default:
-          console.log(`🔔 Notification Processor: Unhandled booking event: ${message.type}`);
+          // console.log(`🔔 Notification Processor: Unhandled booking event: ${message.type}`);
       }
     } catch (error) {
       console.error('❌ Notification Processor: Error processing booking event:', error);
@@ -66,7 +66,7 @@ export class NotificationProcessor {
           break;
         
         default:
-          console.log(`🔔 Notification Processor: Unhandled car event: ${message.type}`);
+          // console.log(`🔔 Notification Processor: Unhandled car event: ${message.type}`);
       }
     } catch (error) {
       console.error('❌ Notification Processor: Error processing car event:', error);

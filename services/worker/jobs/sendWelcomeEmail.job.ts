@@ -10,7 +10,7 @@ export class SendWelcomeEmailJob {
   }): Promise<void> {
     await this.queue.add('sendWelcomeEmail', data, {
       delay: 1000,
-      attempts: 3,
+      attempts: 1,
       backoff: {
         type: 'exponential',
         delay: 1000

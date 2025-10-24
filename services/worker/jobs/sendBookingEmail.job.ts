@@ -12,7 +12,6 @@ export class SendBookingEmailJob {
     emailType?: 'confirmation' | 'modification' | 'cancellation';
   }): Promise<void> {
     await this.queue.add('sendBookingEmail', data, {
-      attempts: 3,
       backoff: {
         type: 'exponential',
         delay: 1000
@@ -26,15 +25,15 @@ export class SendBookingEmailJob {
 export const bookingEmailWorker = () => {
   return QueueManager.createWorker('email-booking', async (job) => {
     const { userEmail, userName, bookingId, carDetails, bookingDetails, emailType = 'confirmation' } = job.data;
-    
+
     console.log(`📧 Processing ${emailType} email for booking: ${bookingId}`);
-    
+
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
     console.log(`✅ ${emailType} email sent to ${userEmail} for booking ${bookingId}`);
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       bookingId,
       emailType,
       sentTo: userEmail,

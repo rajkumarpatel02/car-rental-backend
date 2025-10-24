@@ -30,7 +30,6 @@ export class SendReminderEmailJob {
 
     await this.queue.add('sendReminder', data, { 
       delay,
-      attempts: 3,
       backoff: {
         type: 'exponential',
         delay: 1000
